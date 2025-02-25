@@ -1,0 +1,7 @@
+{
+  "name": "maven",
+  "engineVersion": "v0.16.2-010101000000-dev-18fbee2eb2c2",
+  "sdk": {
+    "source": "java"
+  }
+}
