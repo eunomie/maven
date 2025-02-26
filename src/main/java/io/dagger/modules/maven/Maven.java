@@ -1,13 +1,11 @@
 package io.dagger.modules.maven;
 
-import io.dagger.client.Container;
-import io.dagger.client.DaggerQueryException;
-import io.dagger.client.Directory;
-import io.dagger.client.File;
+import io.dagger.client.*;
 import io.dagger.module.AbstractModule;
 import io.dagger.module.annotation.Function;
 import io.dagger.module.annotation.Object;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
@@ -18,6 +16,18 @@ public class Maven extends AbstractModule {
       "sha256:0e5e89100c3c1a0841ff67e0c1632b9b983e94ee5a9b1f758125d9e43c66856f";
 
   public Container mavenContainer;
+
+  public Maven() {}
+
+  public Maven(Client dag, Optional<Directory> sources) {
+    super(dag);
+    this.mavenContainer =
+        dag.container()
+            .from("%s@%s".formatted(mavenImage, mavenDigest))
+            .withMountedCache("/root/.m2", dag.cacheVolume("maven-m2"))
+            .withWorkdir("/src");
+    sources.ifPresent(s -> this.withSources(s));
+  }
 
   /** Run maven commands */
   @Function
@@ -57,17 +67,6 @@ public class Maven extends AbstractModule {
                     "-DforceStdout"))
             .stdout();
     return String.format("target/%s-%s.jar", artifactID, version);
-  }
-
-  /** Maven container for a specific source directory */
-  @Function
-  public Maven container() {
-    this.mavenContainer =
-        dag.container()
-            .from("%s@%s".formatted(mavenImage, mavenDigest))
-            .withMountedCache("/root/.m2", dag.cacheVolume("maven-m2"))
-            .withWorkdir("/src");
-    return this;
   }
 
   /**
